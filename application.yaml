@@ -1,0 +1,104 @@
+---
+# Source: flow/templates/patch/application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: job-patch-flow-629d9518-equivalents
+  namespace: argo-cd
+  labels:
+    argocd.argoproj.io/name: sp-apac-prod2-ausp-flows-equivalents
+    argocd.argoproj.io/version: 0.1.576
+    argocd.argoproj.io/component: patch
+    argocd.argoproj.io/part-of: flow
+  annotations:
+    "helm.sh/hook": post-install, post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation, hook-succeeded
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: sp-apac-prod2-ausp
+  source:
+    repoURL: https://lnlpuseast.jfrog.io/artifactory/api/helm/helm-virtual/
+    targetRevision: 0.0.1
+    chart: flow-patch
+    helm:
+      releaseName: equivalents-flow-patch
+      valueFiles:
+      - values.yaml
+      values: |-
+        enabled: true
+        project: sp-apac-prod2-ausp
+        name: equivalents
+        assetId: 4604
+        flowspace: au
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: deployment.group
+                  operator: In
+                  values:
+                  - ausp-content-prod
+                  - ausp-prod
+        applyDispReplica: true
+        dispReplica: 1
+        blocks:
+        - name: source
+        - name: transform
+        - name: target
+        image:
+          repository:
+            prefix: 169239262060.dkr.ecr.us-east-1.amazonaws.com
+          tag: 7384fc5330d710f7c822709c89cd005c7b663022
+        args:
+        - |-
+          knnamespace=knative-eventing
+          kcnamespace={{ include "flow.namespace" . }}
+          
+          {{ range $block := $.Values.blocks }}
+          kcnames=$(kubectl -n $kcnamespace get kafkachannel -l argocd.argoproj.io/instance={{ $.Values.project }}-flow-{{ $.Values.name }}-{{ $block.name }} -ojsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
+          
+          for kcname in $kcnames; do
+            (
+              retry=0
+              maxretry=5
+              # wait for controllers to work
+              # for dispatcher only
+              while [[ $(kubectl -n $kcnamespace get kafkachannel $kcname -ojson | jq -r '.status.conditions[] | select(.type == "DispatcherDeploymentReady") | .status' | wc -l) -ne 1 && $retry -lt $maxretry ]]; do
+                retry=$((retry+1))
+                sleep 20
+              done
+          
+              if [[ $retry -eq $maxretry ]]; then
+                >&2 echo "dispatcher deployment of kafkachannel $kcname failed to be created, something wrong with controller"
+                exit 1
+              fi
+          
+              kcdname=$(kubectl -n $knnamespace get deployment -l kafkachannel-dispatcher=true,kafkachannel-name=$kcname,kafkachannel-namespace=$kcnamespace -ojsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
+          
+              kcdcount=$(echo "$kcdname" | wc -l)
+              # kafkachannel and deployment should be 1:1 mapping
+              if [[ $kcdcount -ne 1 ]]; then
+                >&2 echo "$kcdcount deployments found with label selectors kafkachannel-dispatcher=true,kafkachannel-name=$kcname,kafkachannel-namespace=$kcnamespace, exiting"
+                exit 1
+              fi
+          
+              {{ if $.Values.applyDispReplica }}
+              patch='{"spec": {"replicas": {{ $.Values.dispReplica }}, "template": {"spec": {"nodeSelector": {{ include "flow.patch.nodeSelector" $ }}, "affinity": {{ include "flow.patch.affinity" $ }} }}}}'
+              {{ else }}
+              patch='{"spec": {"template": {"spec": {"nodeSelector": {{ include "flow.patch.nodeSelector" $ }}, "affinity": {{ include "flow.patch.affinity" $ }} }}}}'
+              {{ end }}
+              # dispatcher controller won't patch these fields so far during reconciliation
+              kubectl -n $knnamespace patch deployment $kcdname -p="$patch"
+            ) &
+          done
+          {{ end }}
+          wait
+  destination:
+    server: https://1A857CD4CD87D1F0A8CA62B6596DEEB4.gr7.us-east-1.eks.amazonaws.com
+    namespace: 4604-flows-au
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

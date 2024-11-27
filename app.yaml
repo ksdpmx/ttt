@@ -1,0 +1,229 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "500"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  labels:
+    argocd.argoproj.io/component: content
+    argocd.argoproj.io/managed-by: content
+    argocd.argoproj.io/name: sp-apac-prod2-ausp-flows-equivalents
+    argocd.argoproj.io/part-of: content
+    argocd.argoproj.io/version: 0.1.686
+  name: sp-apac-prod2-ausp-flows-equivalents
+  namespace: argo-cd
+spec:
+  destination:
+    namespace: argo-cd
+    server: https://kubernetes.default.svc
+  project: sp-apac-prod2-ausp
+  source:
+    chart: flow
+    helm:
+      parameters:
+      - name: assetId
+        value: "4604"
+      - name: destinationCluster
+        value: https://1A857CD4CD87D1F0A8CA62B6596DEEB4.gr7.us-east-1.eks.amazonaws.com
+      - name: project
+        value: sp-apac-prod2-ausp
+      - name: repositoryPrefix
+        value: 169239262060.dkr.ecr.us-east-1.amazonaws.com
+      - name: istio.enabled
+        value: "true"
+      - name: environmentPath
+        value: use1-prod2
+      releaseName: flowspace-equivalents
+      valueFiles:
+      - values.yaml
+      values: |-
+        monoRepoDeps: false
+        sparkClusterNamespace: 2269-spark-cluster
+        pauseFlows: false
+        blocks:
+        - apiKeySecret: 4604-datalake-api-key-au
+          enabled: true
+          kind: Source
+          name: source
+          values:
+            auditInService:
+              enabled: false
+            auditOutService:
+              enabled: false
+              image:
+                tag: cebb642ae5c3976cd94583ba028774ab979e1bb8
+            blockService:
+              config:
+                s3:
+                  useS3: true
+              enabled: true
+              inFlightRequestsPerPod: 80
+              logging:
+                Configuration:
+                  Loggers:
+                    Root:
+                      level: info
+              maxScale: "3"
+              minScale: "3"
+              serviceAccountAnnotations:
+                eks.amazonaws.com/role-arn: arn:aws:iam::169239262060:role/4604-knative-s3-role
+            datalakeSubscriberService:
+              config:
+                datalake:
+                  subscription:
+                    collections: KRM_au-legal-taxonomy-labels,KRM_au-nonstem-words-phrases,KRM_pa-csr-supp-phrase-dict,KRM_glt-subject-code-list,KRM_pa-legal-words-phrases-eqiv,KRM_pa-nl-term-and-phrase-list,KRM_pacific-fxbs,KRM_pa-spec-word-phrases-r,KRM_pa-phrase-dict,KRM_pa-valid-hyph-portmanteau-terms,KRM_pa-lex-australia,srp-apac-experimental-lexicon-set,LEXCNSKOS_173,LEXCNSKOS_177
+                    name: 4604-datalake-block-prod2-equivalents-subscription
+                    sqsQueueArn: arn:aws:sqs:us-east-1:169239262060:4604-datalake-block-prod2-equivalents-queue
+              enabled: false
+              image:
+                tag: 1e45fd7c16b949a3f8b71b9ac8b0e593a29705a3
+            testSubscriberService:
+              enabled: false
+              resources: {}
+            tmSqsSource:
+              deadLetter:
+                enabled: false
+                queueArn: arn:aws:sqs:us-east-1:169239262060:4604-datalake-block-prod2-equivalents-queue-dead-letter
+                replicaCount: 1
+              enabled: true
+              iamRoleArn: arn:aws:iam::169239262060:role/4604-knative-sqs-role
+              queueArn: arn:aws:sqs:us-east-1:169239262060:4604-datalake-block-prod2-equivalents-queue
+              replicaCount: 3
+        - dependsOn: source
+          enabled: true
+          kind: Transform
+          name: transform
+          values:
+            auditOutService:
+              enabled: false
+              image:
+                tag: cebb642ae5c3976cd94583ba028774ab979e1bb8
+              logging:
+                Configuration:
+                  Loggers:
+                    Root:
+                      level: warn
+            blockService:
+              config:
+                builder: filterEquivalents
+                database: 0
+                poolMaxRetries: 5
+                poolsize: 8
+                redishost: search-redis-replicas.4604-search-services.svc.cluster.local
+                redisport: 6379
+                timeout: 30
+                useGzip: true
+                useProto3: true
+              enabled: true
+              image:
+                repository: 2269-transform-phraseset-java-vert-rx2
+                tag: 3c606e433524acca623a145de7a112dfbf7b2063
+              inFlightRequestsPerPod: "110"
+              metric: rps
+              resources:
+                limits:
+                  memory: 2Gi
+                requests:
+                  cpu: 200m
+                  memory: 1Gi
+            testSubscriberService:
+              enabled: false
+              resources: {}
+        - dependsOn: transform
+          enabled: true
+          kind: RedisTarget
+          name: target
+          values:
+            auditOutService:
+              enabled: false
+              image:
+                tag: cebb642ae5c3976cd94583ba028774ab979e1bb8
+              logging:
+                Configuration:
+                  Loggers:
+                    Root:
+                      level: warn
+            blockService:
+              config:
+                database: 0
+                poolMaxRetries: 5
+                poolsize: 8
+                redishost: search-redis-master.4604-search-services.svc.cluster.local
+                redisport: 6379
+                timeout: 30
+              enabled: true
+              image:
+                tag: e03263a9a9b6c4c429b0acf41df128a8f8a09fb3
+              inFlightRequestsPerPod: 30
+              logging:
+                Configuration:
+                  Appenders:
+                    Console:
+                      PatternLayout:
+                        pattern: '%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n'
+                      direct: true
+                      name: Console
+                      target: SYSTEM_OUT
+                  Loggers:
+                    Root:
+                      AppenderRef:
+                        ref: Console
+                      includeLocation: false
+                      level: info
+                  monitorInterval: 30
+                  name: Default
+                  status: info
+            testSubscriberService:
+              enabled: false
+              resources: {}
+        defaults:
+          channelConfig:
+            kafka:
+              numPartitions: 3
+              replicationFactor: 1
+              scope: cluster
+            kind: Kafka
+            postInstallPatch:
+              applyDispReplica: true
+              dispReplica: 1
+              enabled: false
+              enabledSk8sArgoCD: true
+        enabled: true
+        flowspace: au
+        name: equivalents
+        nodeSelector:
+          deployment.group: ausp-content-prod
+        useBatch: true
+        useGzip: true
+        useProto3: true
+        syncPolicy:
+          automated:
+            prune: true
+            selfHeal: true
+        helmRepo:
+          revision: HEAD
+          url: https://tfs-glo-lexisadvance.visualstudio.com/DefaultCollection/platform/_git/search-platform
+        helmArtifactRepo:
+          url: https://lnlpuseast.jfrog.io/artifactory/api/helm/helm-virtual/
+        nodeSelector:
+          deployment.group: ausp-content-prod
+        kafka:
+          name: kafka-cluster
+          namespace: 5064-streaming
+          port: 29092
+        cassandra:
+          auth:
+            enabled: true
+            secret: k8ss-secret-prod2
+          datacenter: ausp-us-east-1
+          enabled: false
+          kind: k8ssandra
+          name: audit
+          namespace: 4604-databases
+    repoURL: https://lnlpuseast.jfrog.io/artifactory/api/helm/helm-virtual/
+    targetRevision: 0.1.577
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
