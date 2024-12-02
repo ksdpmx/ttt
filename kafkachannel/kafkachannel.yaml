@@ -1,0 +1,37 @@
+apiVersion: messaging.knative.dev/v1beta1
+kind: KafkaChannel
+metadata:
+  annotations:
+    messaging.knative.dev/subscribable: v1
+  labels:
+    argocd.argoproj.io/instance: sp-apac-prod2-ausp-flow-au-content-pros-source
+    kafkaTopic: 4604-flows-au.src-chan-in-au-content-pros-source
+    srp.webhooks.knative.dev/exclude: 'true'
+  name: src-chan-in-au-content-pros-source
+  namespace: 4604-flows-au
+spec:
+  numPartitions: 24
+  replicas: 3
+  nodeSelector:
+    deployment.group: ausp-content-prod
+  replicationFactor: 2
+  retentionDuration: PT72H
+  subscribers:
+  - delivery:
+      backoffDelay: PT10S
+      backoffPolicy: exponential
+      deadLetterSink:
+        uri: >-
+          http://src-s3-error-chan-out-au-content-pros-source-kn-channel.4604-flows-au.svc.cluster.local
+      retry: 0
+    generation: 1
+    replyUri: >-
+      http://src-chan-out-au-content-pros-source-kn-channel.4604-flows-au.svc.cluster.local
+    subscriberUri: >-
+      http://src-s3-reader-au-content-pros-source.4604-flows-au.svc.cluster.local
+    uid: 79f91318-905c-48a4-94a5-236d73c675e2
+  - generation: 1
+    subscriberUri: >-
+      http://primary-recorder-au-content-pros-source.4604-flows-au.svc.cluster.local
+    uid: 428c9f04-0c5a-4b51-ac01-80cae450e6e6
+  tenant: default

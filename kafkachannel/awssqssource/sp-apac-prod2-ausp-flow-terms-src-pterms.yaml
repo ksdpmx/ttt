@@ -1,0 +1,46 @@
+---
+# Source: block-source-datalake-sqs/templates/awssqssource/tmawssqssource.yaml
+apiVersion: sources.triggermesh.io/v1alpha1
+kind: AWSSQSSource
+metadata:
+  name: src-tm-sqs-terms-src-pterms
+  namespace: 4604-flows-au # change me for cnsp
+  labels:
+    argocd.argoproj.io/instance: sp-apac-prod2-ausp-flow-terms-src-pterms # change me for cnsp
+spec:
+  arn: arn:aws:sqs:us-east-1:169239262060:4604-datalake-block-prod2-pterms-queue
+  auth:
+    iamRole: arn:aws:iam::169239262060:role/4604-knative-sqs-role
+  sink:
+    ref:
+      apiVersion: messaging.knative.dev/v1beta1
+      kind: KafkaChannel
+      name: src-chan-in-terms-src-pterms
+  maxBatchSize: "8"
+  sendBatchedResponse: "true"
+  replicas: 1
+  nodeSelector:
+    deployment.group: ausp-content-prod
+---
+# Source: block-source-datalake-sqs/templates/awssqssource/tmawssqssource-dead-letter.yaml
+apiVersion: sources.triggermesh.io/v1alpha1
+kind: AWSSQSSource
+metadata:
+  name: src-tm-sqs-dead-terms-src-pterms
+  namespace: 4604-flows-au # change me for cnsp
+  labels:
+    argocd.argoproj.io/instance: sp-apac-prod2-ausp-flow-terms-src-pterms # change me for cnsp
+spec:
+  arn: arn:aws:sqs:us-east-1:169239262060:4604-datalake-block-prod2-pterms-queue-dead-letter
+  auth:
+    iamRole: arn:aws:iam::169239262060:role/4604-knative-sqs-role
+  sink:
+    ref:
+      apiVersion: messaging.knative.dev/v1beta1
+      kind: KafkaChannel
+      name: src-chan-in-terms-src-pterms
+  maxBatchSize: "8"
+  sendBatchedResponse: "true"
+  replicas: 1
+  nodeSelector:
+    deployment.group: ausp-content-prod

@@ -1,0 +1,22 @@
+apiVersion: messaging.knative.dev/v1beta1
+kind: KafkaChannel
+metadata:
+  annotations:
+    messaging.knative.dev/subscribable: v1
+  labels:
+    argocd.argoproj.io/instance: sp-apac-prod2-ausp-flow-source-publisher-tran-xml
+    kafkaTopic: 4604-flows-au.trans-chan-out-source-publisher-tran-xml
+    srp.webhooks.knative.dev/exclude: "true"
+  name: trans-chan-out-source-publisher-tran-xml
+  namespace: 4604-flows-au
+spec:
+  numPartitions: 3
+  replicas: 5
+  replicationFactor: 1
+  retentionDuration: PT72H
+  subscribers:
+  - generation: 1
+    replyUri: http://trans-chan-out-source-publisher-tran-jslt-kn-channel.4604-flows-au.svc.cluster.local
+    subscriberUri: http://trans-yaml-source-publisher-tran-jslt.4604-flows-au.svc.cluster.local
+    uid: 5b3af767-d770-4f92-bc80-52a1c3094d28
+  tenant: default

@@ -1,0 +1,42 @@
+---
+# Source: block-source-datalake-sqs/templates/awssqssource/tmawssqssource.yaml
+apiVersion: sources.triggermesh.io/v1alpha1
+kind: AWSSQSSource
+metadata:
+  name: src-tm-sqs-taxonomy-location-source
+  namespace: 4604-flows-au # change me for cnsp
+  labels:
+    argocd.argoproj.io/instance: sp-apac-prod2-ausp-flow-taxonomy-location-source # change me for cnsp
+spec:
+  arn: arn:aws:sqs:us-east-1:169239262060:4604-datalake-block-prod2-location-queue
+  auth:
+    iamRole: arn:aws:iam::169239262060:role/4604-knative-sqs-role
+  sink:
+    ref:
+      apiVersion: messaging.knative.dev/v1beta1
+      kind: KafkaChannel
+      name: src-chan-in-taxonomy-location-source
+  replicas: 1
+  nodeSelector:
+    deployment.group: ausp-content-prod
+---
+# Source: block-source-datalake-sqs/templates/awssqssource/tmawssqssource-dead-letter.yaml
+apiVersion: sources.triggermesh.io/v1alpha1
+kind: AWSSQSSource
+metadata:
+  name: src-tm-sqs-dead-taxonomy-location-source
+  namespace: 4604-flows-au # change me for cnsp
+  labels:
+    argocd.argoproj.io/instance: sp-apac-prod2-ausp-flow-taxonomy-location-source # change me for cnsp
+spec:
+  arn: arn:aws:sqs:us-east-1:169239262060:4604-datalake-block-prod2-location-queue-dead-letter
+  auth:
+    iamRole: arn:aws:iam::169239262060:role/4604-knative-sqs-role
+  sink:
+    ref:
+      apiVersion: messaging.knative.dev/v1beta1
+      kind: KafkaChannel
+      name: src-chan-in-taxonomy-location-source
+  replicas: 1
+  nodeSelector:
+    deployment.group: ausp-content-prod

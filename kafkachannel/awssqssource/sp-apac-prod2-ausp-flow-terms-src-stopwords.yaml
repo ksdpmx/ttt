@@ -1,0 +1,43 @@
+apiVersion: sources.triggermesh.io/v1alpha1
+kind: AWSSQSSource
+metadata:
+  name: src-tm-sqs-terms-src-stopwords
+  namespace: 4604-flows-au
+  labels:
+    argocd.argoproj.io/instance: sp-apac-prod2-ausp-flow-terms-src-stopwords
+spec:
+  arn: arn:aws:sqs:us-east-1:169239262060:4604-datalake-block-prod2-stopwords-queue
+  auth:
+    iamRole: arn:aws:iam::169239262060:role/4604-knative-sqs-role
+  maxBatchSize: '8'
+  nodeSelector:
+    deployment.group: ausp-content-prod
+  replicas: 1
+  sendBatchedResponse: 'true'
+  sink:
+    ref:
+      apiVersion: messaging.knative.dev/v1beta1
+      kind: KafkaChannel
+      name: src-chan-in-terms-src-stopwords
+---
+apiVersion: sources.triggermesh.io/v1alpha1
+kind: AWSSQSSource
+metadata:
+  name: src-tm-sqs-dead-terms-src-stopwords
+  namespace: 4604-flows-au
+  labels:
+    argocd.argoproj.io/instance: sp-apac-prod2-ausp-flow-terms-src-stopwords
+spec:
+  arn: arn:aws:sqs:us-east-1:169239262060:4604-datalake-block-prod2-stopwords-queue-dead-letter
+  auth:
+    iamRole: arn:aws:iam::169239262060:role/4604-knative-sqs-role
+  maxBatchSize: '8'
+  nodeSelector:
+    deployment.group: ausp-content-prod
+  replicas: 1
+  sendBatchedResponse: 'true'
+  sink:
+    ref:
+      apiVersion: messaging.knative.dev/v1beta1
+      kind: KafkaChannel
+      name: src-chan-in-terms-src-stopwords

@@ -1,0 +1,21 @@
+---
+# Source: block-source-datalake-sqs/templates/awssqssource/tmawssqssource.yaml
+apiVersion: sources.triggermesh.io/v1alpha1
+kind: AWSSQSSource
+metadata:
+  name: src-tm-sqs-courts-src
+  namespace: 4604-flows-au # change me for cnsp
+  labels:
+    argocd.argoproj.io/instance: sp-apac-prod2-ausp-flow-courts-src # change me for cnsp
+spec:
+  arn: arn:aws:sqs:us-east-1:169239262060:4604-datalake-block-prod2-masters-courts-queue
+  auth:
+    iamRole: arn:aws:iam::169239262060:role/4604-knative-sqs-role
+  sink:
+    ref:
+      apiVersion: messaging.knative.dev/v1beta1
+      kind: KafkaChannel
+      name: src-chan-in-courts-src
+  replicas: 1
+  nodeSelector:
+    deployment.group: ausp-content-prod

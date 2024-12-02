@@ -1,0 +1,59 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  labels:
+    argocd.argoproj.io/instance: sp-apac-prod2-knative-dist-chan-kafka
+    kafka.eventing.knative.dev/release: v1.3.1
+  name: defaulting.webhook.kafka.messaging.knative.dev
+  ownerReferences:
+  - apiVersion: v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Namespace
+    name: knative-eventing
+    uid: 2c18f97a-4fb1-4530-969c-b75a8991f286
+webhooks:
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUNlakNDQWlHZ0F3SUJBZ0lSQUlPNE9XTkgyb0lRZTFWMU5XWDRURU13Q2dZSUtvWkl6ajBFQXdJd1F6RVUKTUJJR0ExVUVDaE1MYTI1aGRHbDJaUzVrWlhZeEt6QXBCZ05WQkFNVEltdGhabXRoTFhkbFltaHZiMnN1YTI1aApkR2wyWlMxbGRtVnVkR2x1Wnk1emRtTXdIaGNOTWpReE1qQXlNVEF3TURRMldoY05NalF4TWpBNU1UQXdNRFEyCldqQkRNUlF3RWdZRFZRUUtFd3RyYm1GMGFYWmxMbVJsZGpFck1Da0dBMVVFQXhNaWEyRm1hMkV0ZDJWaWFHOXYKYXk1cmJtRjBhWFpsTFdWMlpXNTBhVzVuTG5OMll6QlpNQk1HQnlxR1NNNDlBZ0VHQ0NxR1NNNDlBd0VIQTBJQQpCTFpzUWZJbW9vU2NkbU1LVlpqQlhlL0FKRVNVaGMzRHJibWhmdjRLKy9RWlNjc2x6MDVybFgyK01hR3pOUVBvCkx6RkFKZm82NkZmbTRRSVZ3aXlDbnNXamdmVXdnZkl3RGdZRFZSMFBBUUgvQkFRREFnS0VNQjBHQTFVZEpRUVcKTUJRR0NDc0dBUVVGQndNQkJnZ3JCZ0VGQlFjREFqQVBCZ05WSFJNQkFmOEVCVEFEQVFIL01CMEdBMVVkRGdRVwpCQlJ5N3VEbUd5OVdaRE5TYU9hTGg2WUV5MHQyQ3pDQmtBWURWUjBSQklHSU1JR0ZnZzFyWVdacllTMTNaV0pvCmIyOXJnaDVyWVdacllTMTNaV0pvYjI5ckxtdHVZWFJwZG1VdFpYWmxiblJwYm1lQ0ltdGhabXRoTFhkbFltaHYKYjJzdWEyNWhkR2wyWlMxbGRtVnVkR2x1Wnk1emRtT0NNR3RoWm10aExYZGxZbWh2YjJzdWEyNWhkR2wyWlMxbApkbVZ1ZEdsdVp5NXpkbU11WTJ4MWMzUmxjaTVzYjJOaGJEQUtCZ2dxaGtqT1BRUURBZ05IQURCRUFpQmNlS0NmCi9sampiSFAyVlBkQjFrekdTZzQyU3lhN3Y2WDJPYk0yMkZWZ0F3SWdWL2VRRVl5c2tDbG5DRHQxbG9idTd0bEkKaFRiZjlDNFg3TjlINHVJb2pubz0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+    service:
+      name: kafka-webhook
+      namespace: knative-eventing
+      path: /defaulting
+      port: 443
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: defaulting.webhook.kafka.messaging.knative.dev
+  namespaceSelector:
+    matchExpressions:
+    - key: webhooks.knative.dev/exclude
+      operator: DoesNotExist
+  objectSelector: {}
+  reinvocationPolicy: Never
+  rules:
+  - apiGroups:
+    - kafka.eventing.knative.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - resetoffsets
+    - resetoffsets/status
+    scope: '*'
+  - apiGroups:
+    - messaging.knative.dev
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kafkachannels
+    - kafkachannels/status
+    scope: '*'
+  sideEffects: None
+  timeoutSeconds: 10

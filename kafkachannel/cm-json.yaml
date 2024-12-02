@@ -1,0 +1,129 @@
+apiVersion: v1
+data:
+  default: |
+    eventing-kafka: |
+      kafka:
+        brokers: kafka-cluster-kafka-bootstrap.5064-streaming.svc.cluster.local.:9092
+        adminType: kafka
+      cloudevents:
+        maxIdleConns: 10000
+        maxIdleConnsPerHost: 500
+      dispatcher:
+        cpuLimit: 500m
+        cpuRequest: 300m
+        memoryLimit: 4Gi
+        memoryRequest: 50Mi
+        podLabels:
+          sidecar.istio.io/inject: "true"
+        replicas: 5
+      numPartitions: 3
+      receiver:
+        cpuLimit: 500m
+        cpuRequest: 300m
+        memoryLimit: 3Gi
+        memoryRequest: 256Mi
+        podLabels:
+          sidecar.istio.io/inject: "true"
+        replicas: 72
+      replicationFactor: 3
+      retentionDuration: 4320000000
+    sarama: |
+      Consumer:
+        Fetch:
+          Default: 1048576
+          Max: 335544320
+      Producer:
+        MaxMessageBytes: 335544320
+        Retry:
+          Backoff: 1000
+          Max: 5
+      config:
+        Version: 2.6.0
+        Admin:
+          Timeout: 10000000000
+        Net:
+          KeepAlive: 30000000000
+          MaxOpenRequests: 1
+          TLS:
+            Enable: false
+          SASL:
+            Enable: false
+            Version: 1
+        Metadata:
+          RefreshFrequency: 300000000000
+        Consumer:
+          Offsets:
+            AutoCommit:
+              Interval: 5000000000
+            Retention: 604800000000000
+        Producer:
+          Idempotent: true
+          RequiredAcks: -1
+      enableLogging: false
+  cnsp: |
+    eventing-kafka: |
+      kafka:
+        brokers: kafka-cluster-kafka-bootstrap.5064-streaming.svc.cluster.local.:9092
+        adminType: kafka
+      cloudevents:
+        maxIdleConns: 10000
+        maxIdleConnsPerHost: 500
+      dispatcher:
+        cpuLimit: 500m
+        cpuRequest: 300m
+        memoryLimit: 4Gi
+        memoryRequest: 50Mi
+        podLabels:
+          sidecar.istio.io/inject: "true"
+        replicas: 5
+      numPartitions: 3
+      receiver:
+        cpuLimit: 500m
+        cpuRequest: 300m
+        memoryLimit: 3Gi
+        memoryRequest: 256Mi
+        podLabels:
+          sidecar.istio.io/inject: "true"
+        replicas: 72
+      replicationFactor: 3
+      retentionDuration: 4320000000
+    sarama: |
+      Consumer:
+        Fetch:
+          Default: 1048576
+          Max: 335544320
+      Producer:
+        MaxMessageBytes: 335544320
+        Retry:
+          Backoff: 1000
+          Max: 5
+      config:
+        Version: 2.6.0
+        Admin:
+          Timeout: 10000000000
+        Net:
+          KeepAlive: 30000000000
+          MaxOpenRequests: 1
+          TLS:
+            Enable: false
+          SASL:
+            Enable: false
+            Version: 1
+        Metadata:
+          RefreshFrequency: 300000000000
+        Consumer:
+          Offsets:
+            AutoCommit:
+              Interval: 5000000000
+            Retention: 604800000000000
+        Producer:
+          Idempotent: true
+          RequiredAcks: -1
+      enableLogging: false
+kind: ConfigMap
+metadata:
+  labels:
+    argocd.argoproj.io/instance: sp-apac-prod2-knative-dist-chan-kafka
+    kafka.eventing.knative.dev/release: v1.3.1
+  name: config-kafka
+  namespace: knative-eventing

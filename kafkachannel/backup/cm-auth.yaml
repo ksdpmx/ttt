@@ -1,0 +1,56 @@
+apiVersion: v1
+data:
+  mapAccounts: |
+    []
+  mapRoles: |
+    - "groups":
+      - "system:bootstrappers"
+      - "system:nodes"
+      "rolearn": "arn:aws:iam::169239262060:role/5064-sp-apac-prod2-instance-profile"
+      "username": "system:node:{{EC2PrivateDNSName}}"
+    - "groups":
+      - "adfs-devopsadmin"
+      "rolearn": "arn:aws:iam::169239262060:role/ADFS-DevOpsAdmin"
+      "username": "ADFS-DevOpsAdmin:{{SessionName}}"
+    - "groups":
+      - "adfs-devopsadmin"
+      "rolearn": "arn:aws:iam::169239262060:role/ADFS-Admin"
+      "username": "ADFS-Admin:{{SessionName}}"
+    - "groups":
+      - "developer"
+      "rolearn": "arn:aws:iam::169239262060:role/ADFS-SearchPlatformOperator"
+      "username": "developer:{{SessionName}}"
+    - "groups":
+      - "system:bootstrappers"
+      - "system:nodes"
+      "rolearn": "arn:aws:iam::169239262060:role/5064-sp-apac-prod2-karpenter-oidc"
+      "username": "system:node:{{EC2PrivateDNSName}}"
+    - "groups":
+      - "adfs-devopsadmin"
+      "rolearn": "arn:aws:iam::169239262060:role/ADFS-DevOpsAdmin"
+      "username": "ADFS-DevOpsAdmin:{{SessionName}}"
+    - "groups":
+      - "system:masters"
+      "rolearn": "arn:aws:iam::169239262060:role/4054-standardized-kubernetes-platform-6083-sk8s"
+      "username": "system:masters:{{SessionName}}"
+    - "groups":
+      - "adfs-sk8soperator"
+      "rolearn": "arn:aws:iam::169239262060:role/ADFS-sK8sOperator"
+      "username": "ADFS-sK8sOperator:{{SessionName}}"
+    - "groups":
+      - "readonly"
+      "rolearn": "arn:aws:iam::169239262060:role/LNLP-GlobalDevOps-ReadOnly"
+      "username": "readonly:{{SessionName}}"
+    - "groups":
+      - "readonly"
+      "rolearn": "arn:aws:iam::169239262060:role/ADFS-Readonly"
+      "username": "readonly:{{SessionName}}"
+  mapUsers: |
+    []
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2024-09-25T15:30:09Z"
+  name: aws-auth
+  namespace: kube-system
+  resourceVersion: "2123"
+  uid: 091ff389-d82b-4d1a-8891-b5c28870641c

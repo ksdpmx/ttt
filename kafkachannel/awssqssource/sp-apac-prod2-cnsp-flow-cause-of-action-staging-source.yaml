@@ -1,0 +1,46 @@
+---
+# Source: block-source-datalake-sqs/templates/awssqssource/tmawssqssource.yaml
+apiVersion: sources.triggermesh.io/v1alpha1
+kind: AWSSQSSource
+metadata:
+  name: src-tm-sqs-cause-of-action-staging-source
+  # namespace: 4604-flows-au
+  namespace: 4563-flows-cnsp # change me for ausp/cnsp
+  labels:
+    # argocd.argoproj.io/instance: sp-apac-prod2-ausp-flow-cause-of-action-staging-source
+    argocd.argoproj.io/instance: sp-apac-prod2-cnsp-flow-cause-of-action-staging-source # change me for ausp/cnsp
+spec:
+  arn: arn:aws:sqs:us-east-1:169239262060:4563-datalake-block-staging-cause-of-action-queue
+  auth:
+    iamRole: arn:aws:iam::169239262060:role/4563-knative-sqs-role
+  sink:
+    ref:
+      apiVersion: messaging.knative.dev/v1beta1
+      kind: KafkaChannel
+      name: src-chan-in-cause-of-action-staging-source
+  replicas: 1
+  nodeSelector:
+    deployment.group: apac-cnsp-content-prod
+---
+# Source: block-source-datalake-sqs/templates/awssqssource/tmawssqssource-dead-letter.yaml
+apiVersion: sources.triggermesh.io/v1alpha1
+kind: AWSSQSSource
+metadata:
+  name: src-tm-sqs-dead-cause-of-action-staging-source
+  # namespace: 4604-flows-au # change me for cnsp
+  namespace: 4563-flows-cnsp
+  labels:
+    # argocd.argoproj.io/instance: sp-apac-prod2-ausp-flow-cause-of-action-staging-source
+    argocd.argoproj.io/instance: sp-apac-prod2-cnsp-flow-cause-of-action-staging-source # change me for cnsp
+spec:
+  arn: arn:aws:sqs:us-east-1:169239262060:4563-datalake-block-staging-cause-of-action-queue-dead-letter
+  auth:
+    iamRole: arn:aws:iam::169239262060:role/4563-knative-sqs-role
+  sink:
+    ref:
+      apiVersion: messaging.knative.dev/v1beta1
+      kind: KafkaChannel
+      name: src-chan-in-cause-of-action-staging-source
+  replicas: 1
+  nodeSelector:
+    deployment.group: apac-cnsp-content-prod
